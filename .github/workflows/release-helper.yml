@@ -1,15 +1,48 @@
 name: release-helper
-on:
-  issue_comment:
-    types: [created, edited]
+on: [push]
 jobs:
   release-helper:
-    if: startsWith(github.event.comment.body, '@bazel-io ')
     runs-on: ubuntu-latest
     permissions:
       issues: write
     steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas
+          pip install numpy
+      - run: sudo apt update
+      - run: sudo apt install inotify-tools
+      - run: inotifywait -mr /home/runner/work/bazel/bazel/ --format '%T;%w;%f;%e' --timefmt %T -o /home/runner/inotify-logs.csv & echo 'basak'
+      - run: touch starting_releasehelper_Runhelper_12
+      - run: rm starting_releasehelper_Runhelper_12
       - name: Run helper
         uses: bazelbuild/continuous-integration/actions/release-helper@master
         with:
           token: ${{ secrets.BAZEL_IO_TOKEN }}
+      - run: touch starting_finished_finished_8979874
+        if: always()
+      - run: rm starting_finished_finished_8979874
+        if: always()
+      - name: Execute py script # run file
+        if: always()
+        run: |
+          python .github/workflows/script.py
+      - run: cp /home/runner/inotify-logs.csv /home/runner/work/bazel/bazel/optimizing-ci-builds-ci-analysis/
+        if: always()
+      - name: Pushes analysis to another repository
+        if: always()
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-directory: 'optimizing-ci-builds-ci-analysis'
+          destination-github-username: 'Priya-it'
+          destination-repository-name: 'ci-analyzes'
+          target-branch: 'bazel.1671744188'
+          target-directory: 'bazel/1671744188/.github/workflows/release-helper/releasehelper'
+
